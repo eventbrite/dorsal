@@ -1,6 +1,10 @@
 language: node_js
 node_js:
-    - "0.10"
+- '0.10'
 before_install: npm install -g grunt-cli phantomjs
 install: npm install
 script: npm test
+env:
+  global:
+  - secure: egPxJvYkBlLf5h0UzeBjHm0XJPzxYdzI5CGGBN4qIjjlTG9hGDFMFMjc9maELBZHHMN9os8byQHXYMn+JbSVkgFA1vOxrxYQhEY7mZT17EOenujgm/vG8A76f5KI8I1aDN2FRUZLa9xAaqNWuUJAUNJ1+/vJ6V6DGxYTjNYLq+w=
+  - secure: Fiu02Pry6UkwJY627HRV/n5C8dkG99XEV2gWRjG5lZlv2HWwuxOAKhbS7earM3UshKKxvM2G1MCM7XaXslYt9Q+hWD5OV3To0qPCiobxL1sltwOqqf2KMRES0wwpymbg3fNhFSVByOFySeIddGu4JYWZpz8jAYqEUIHoeu0iC2k=

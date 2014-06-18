@@ -101,7 +101,91 @@ module.exports = function(grunt) {
                         'node_modules/jquery/dist/jquery.js'
                     ],
                     helpers: [
-                        'node_modules/jasmine-jquery/lib/jasmine-jquery.js'
+                        'node_modules/jasmine-jquery/lib/jasmine-jquery.js',
+                        'tests/jasmine-jsreporter.js',
+                        'tests/dorsal-reporter.js'
+                    ]
+                }
+            }
+        },
+
+        connect: {
+            unitTests: {
+                options: {
+                    port: 8000,
+                    // keepalive: true
+                }
+            }
+        },
+
+        'saucelabs-jasmine': {
+            dorsal: {
+                options: {
+                    testname: 'Dorsal.js Unit Tests',
+                    username: 'env-variable-here',
+                    key: 'env-variable-here',
+                    urls: ['http://localhost:8000/_SpecRunner.html'],
+                    browsers: [
+                        {
+                            browserName: 'firefox',
+                            version: '10',
+                            platform: 'Linux'
+                        },
+                        {
+                            browserName: 'firefox',
+                            version: '30',
+                            platform: 'Windows XP'
+                        },
+                        {
+                            browserName: 'iehta',
+                            version: '8',
+                            platform: 'Windows XP'
+                        },
+                        {
+                            browserName: 'iehta',
+                            version: '9',
+                            platform: 'Windows 7'
+                        },
+                        {
+                            browserName: 'iehta',
+                            version: '10',
+                            platform: 'Windows 7'
+                        },
+                        {
+                            browserName: 'safari',
+                            version: '5',
+                            platform: 'OS X 10.6'
+                        },
+                        {
+                            browserName: 'safari',
+                            version: '6',
+                            platform: 'OSX 10.8'
+                        },
+                        {
+                            browserName: 'googlechrome',
+                            version: 'beta',
+                            platform: 'OS X 10.8'
+                        },
+                        {
+                            browserName: 'googlechrome',
+                            version: '35',
+                            platform: 'OS X 10.9'
+                        },
+                        {
+                            browserName: 'googlechrome',
+                            version: '34',
+                            platform: 'OS X 10.8'
+                        },
+                        {
+                            browserName: 'googlechrome',
+                            version: '28',
+                            platform: 'OSX 10.8'
+                        },
+                        {
+                            browserName: 'googlechrome',
+                            version: '35',
+                            platform: 'Windows 8.1'
+                        }
                     ]
                 }
             }
@@ -115,8 +199,11 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
+    grunt.loadNpmTasks('grunt-saucelabs');
+    grunt.loadNpmTasks('grunt-contrib-connect');
 
     grunt.registerTask('test', ['jasmine']);
+    grunt.registerTask('integration', ['jasmine', 'connect:unitTests', 'saucelabs-jasmine']);
 
     grunt.registerTask('default', [
         'clean',

@@ -85,19 +85,13 @@
             this.dorsal.wire();
         });
 
+        // Note: this test is testing things differently on new browsers vs old
         it('gets data attributes without dataset', function() {
             expect($('.js-d-test')).toHaveHtml('hello, world');
         });
 
         it('gets attributes in older browsers', function() {
             var attributes = this.dorsal._getDataAttributes($(this.html).get(0));
-            expect(attributes.testOneYay).toBe('hello');
-            expect(attributes.testTwoYay).toBe('world');
-        });
-
-        // note this test will actually fail in older browsers
-        it('gets attributes in newer browsers', function() {
-            var attributes = this.dorsal._getDatasetAttributes($(this.html).get(0));
             expect(attributes.testOneYay).toBe('hello');
             expect(attributes.testTwoYay).toBe('world');
         });
