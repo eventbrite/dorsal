@@ -19,32 +19,6 @@ DorsalCore.prototype.VERSION = '0.3.2';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_PREFIX = 'd';
 
-// Function.bind polyfill
-if (!Function.prototype.bind) {
-    Function.prototype.bind = function (oThis) {
-        if (typeof this !== "function") {
-            // closest thing possible to the ECMAScript 5
-            // internal IsCallable function
-            throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-        }
-
-        var aArgs = Array.prototype.slice.call(arguments, 1),
-            fToBind = this,
-            fNOP = function () {},
-            fBound = function () {
-              return fToBind.apply(this instanceof fNOP && oThis
-                     ? this
-                     : oThis,
-                     aArgs.concat(Array.prototype.slice.call(arguments)));
-            };
-
-        fNOP.prototype = this.prototype;
-        fBound.prototype = new fNOP();
-
-        return fBound;
-    };
-}
-
 DorsalCore.prototype.registerPlugin = function(pluginName, callback) {
     if (!this.plugins) {
         this.plugins = {};
@@ -111,18 +85,19 @@ DorsalCore.prototype._runPlugin = function(plugin, el) {
 };
 
 DorsalCore.prototype._wirePlugin = function(plugin, el) {
+    var self = this;
     window.setTimeout(function() {
-        pluginCSSClass = this.CSS_PREFIX + plugin;
-        elements = el.querySelectorAll(pluginCSSClass);
+        var pluginCSSClass = self.CSS_PREFIX + plugin,
+            elements = el.querySelectorAll(pluginCSSClass);
 
         if (el !== document && el.className.indexOf(pluginCSSClass.substr(1)) > -1) {
-            this._runPlugin(this.plugins[plugin], el);
+            self._runPlugin(self.plugins[plugin], el);
         }
 
         for (var elementIndex = 0, element; (element = elements[elementIndex]); elementIndex++) {
-            this._runPlugin(this.plugins[plugin], element);
+            self._runPlugin(self.plugins[plugin], element);
         }
-    }.bind(this), 0);
+    }, 0);
 }
 
 DorsalCore.prototype.wire = function(el) {
@@ -133,10 +108,7 @@ DorsalCore.prototype.wire = function(el) {
     var pluginKeys = Object.keys(this.plugins),
         index = 0,
         length = pluginKeys.length,
-        elements,
-        data,
-        el = el || document,
-        pluginCSSClass;
+        el = el || document;
 
     for (; index < length; index++) {
         this._wirePlugin(pluginKeys[index], el);
