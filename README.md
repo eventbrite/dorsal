@@ -1,6 +1,7 @@
 Dorsal
 ======
 [![Build Status](https://travis-ci.org/eventbrite/dorsal.svg)](https://travis-ci.org/eventbrite/dorsal) [![NPM version](https://badge.fury.io/js/dorsal.svg)](http://badge.fury.io/js/dorsal) [![Code Climate](https://codeclimate.com/github/eventbrite/dorsal.png)](https://codeclimate.com/github/eventbrite/dorsal)
+
 What is it?
 -----------
 

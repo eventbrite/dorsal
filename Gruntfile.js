@@ -119,6 +119,8 @@ module.exports = function(grunt) {
         }
     });
 
+    grunt.loadTasks('tasks');
+
     grunt.loadNpmTasks('grunt-umd');
     grunt.loadNpmTasks('grunt-banner');
     grunt.loadNpmTasks('grunt-contrib-concat');
