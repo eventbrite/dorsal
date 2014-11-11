@@ -5,6 +5,7 @@ description: "A client-side JavaScript boilerplate automation system"
 baseurl: "/dorsal"
 url: "https://eventbrite.github.io/dorsal"
 repo: "https://github.com/eventbrite/dorsal"
+docs: "https://github.com/eventbrite/dorsal/wiki/API"
 twitter_username: eventbrite
 github_username:  eventbrite
 

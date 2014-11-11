@@ -41,7 +41,7 @@ The following is an example of a plugin and its usage. We define a Dorsal plugin
 
                 return options.el;
             },
-            destory: function(options) {
+            destroy: function(options) {
                 options.instance.innerHTML = '';
             }
         });
