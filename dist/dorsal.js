@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.4.0 - 2014-10-07 */
+/*! dorsal - v0.5.0 - 2015-01-12 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -41,6 +41,10 @@ var createGUID = (function() {
     };
 })();
 
+function isHTMLElement(node) {
+    return node.nodeType === 1;
+}
+
 function arrayIndexOf(arr, value) {
     var lengthOfArr = arr.length,
         i = 0;
@@ -60,13 +64,25 @@ function arrayIndexOf(arr, value) {
 
 var DorsalCore = function() {};
 
-DorsalCore.prototype.VERSION = '0.4.0';
+/**
+* @namespace Dorsal
+*
+* @property {string} Dorsal.VERSION - current Version
+* @property {DATA_PREFIX} Dorsal.DATA_PREFIX - prefix for attributes used by Dorsal
+* @property {DATA_DORSAL_WIRED} Dorsal.DATA_DORSAL_WIRED - data attribute used for internal management
+* @property {GUID_KEY} Dorsal.GUID_KEY - data attribute added to each element wired
+* @property {CSS_PREFIX} Dorsal.CSS_PREFIX - prefix for any wirable pluginName
+* @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
+*/
+
+DorsalCore.prototype.VERSION = '0.5.0';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
 DorsalCore.prototype.DATA_DORSAL_WIRED = 'data-' + DorsalCore.prototype.DATA_IGNORE_PREFIX + '-wired';
 DorsalCore.prototype.GUID_KEY = 'dorsal-guid';
 DorsalCore.prototype.ELEMENT_TO_PLUGINS_MAP = {};
+DorsalCore.prototype.DEBUG = false;
 
 DorsalCore.prototype.registerPlugin = function(pluginName, callback) {
     if (!this.plugins) {
@@ -75,6 +91,11 @@ DorsalCore.prototype.registerPlugin = function(pluginName, callback) {
     this.plugins[pluginName] = callback;
 };
 
+/**
+* @function Dorsal.unregisterPlugin
+* @description unregister a given plugin
+* @param {string} pluginName Plugin Name
+*/
 DorsalCore.prototype.unregisterPlugin = function(pluginName) {
     delete this.plugins[pluginName];
 };
@@ -99,6 +120,13 @@ DorsalCore.prototype._normalizeDataAttribute =  function(attr) {
     return attr.toUpperCase().replace('-','');
 };
 
+/**
+ *
+ * @function Dorsal._getDataAttributes
+ * @param {DomNode} el
+ * @return {Object} all the data attributes present in a given node
+ * @private
+ */
 DorsalCore.prototype._getDataAttributes = function(el) {
     var dataAttributes = {},
         attributes = el.attributes,
@@ -119,10 +147,10 @@ DorsalCore.prototype._getDataAttributes = function(el) {
 };
 
 /**
- * _getAttributes
- *
- * @param {DOMNode} el
- * @returns {Object} all the data- attributes present in the given element
+ * @function Dorsal._getAttributes
+ * @param {DomNode} el
+ * @returns {Object} all the data attributes present in the given node
+ * @private
  */
 DorsalCore.prototype._getAttributes = function(el) {
     if (el.dataset) {
@@ -134,7 +162,10 @@ DorsalCore.prototype._getAttributes = function(el) {
 
 DorsalCore.prototype._runPlugin = function(el, pluginName) {
     // if already initialized, don't reinitialize
+    var log = new DorsalLog(this.DEBUG);
+
     if (el.getAttribute(this.DATA_DORSAL_WIRED) && el.getAttribute(this.DATA_DORSAL_WIRED).indexOf(pluginName) !== -1) {
+        log.log('node already wired: ' + el);
         return false;
     }
 
@@ -153,44 +184,148 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
         this.ELEMENT_TO_PLUGINS_MAP[elementGUID] = {};
     }
 
+    log.log('plugin execution start', {guid: elementGUID, pluginName: pluginName});
+
     if (typeof plugin === 'function') {
         this.ELEMENT_TO_PLUGINS_MAP[elementGUID][pluginName] = plugin.call(el, options);
     } else if (typeof plugin === 'object') {
         this.ELEMENT_TO_PLUGINS_MAP[elementGUID][pluginName] = plugin.create.call(el, options);
     }
 
+    log.log('plugin execution end', {guid: elementGUID, pluginName: pluginName});
+
     if (wiredAttribute) {
         el.setAttribute(this.DATA_DORSAL_WIRED, wiredAttribute + ' ' + pluginName);
     } else {
         el.setAttribute(this.DATA_DORSAL_WIRED, pluginName);
     }
+
+    return elementGUID;
 };
 
-DorsalCore.prototype._wireElement = function(el, pluginName, deferred) {
-    var self = this;
-    window.setTimeout(function() {
-        var pluginCSSClass = self.CSS_PREFIX + pluginName,
-            elIsValid = el !== undefined && el.querySelectorAll,
-            elements,
-            pluginResponse;
+/**
+ * @function Dorsal.registeredPlugins
+ * @description will return each plugin name registered
+ * @return {Array} registered plugin names
+ */
+DorsalCore.prototype.registeredPlugins = function() {
+    return Object.keys(this.plugins);
+};
 
-        if (elIsValid) {
-            elements = el.querySelectorAll(pluginCSSClass);
-        } else {
+/**
+ * @function Dorsal._wireElementsFrom
+ * @param {DomNode} parentNode
+ * @param {Promise} deferred object to proxy to the next method
+ * @private
+ */
+DorsalCore.prototype._wireElementsFrom = function(parentNode) {
+    var isValidNode = parentNode && 'querySelectorAll' in parentNode,
+        plugins = this.registeredPlugins(),
+        index = 0,
+        pluginName,
+        pluginCSSClass,
+        nodes,
+        response,
+        responses = [];
+
+    if (!isValidNode) {
+        log.log('invalid Node: '+ prentNode);
+        return;
+    }
+
+    pluginName = plugins[index++];
+
+    while(pluginName) {
+        nodes = parentNode.querySelectorAll(this.CSS_PREFIX + pluginName);
+
+        if (nodes.length) {
+            response = this._wireElements(nodes, [pluginName]);
+            responses = responses.concat(response);
+        }
+        pluginName = plugins[index++];
+    }
+    return responses;
+};
+
+/**
+ * @function Dorsal._wireElements
+ * @param {DomNode[]} nodes dom nodes to wire
+ * @param {Array|String} plugins plugins to wire the given nodes.
+ * @param {Promise} deferred object to proxy to the next method
+ * @private
+ */
+DorsalCore.prototype._wireElements = function(nodes, plugins) {
+    if (!nodes.length) {
+        var log = new DorsalLog(this.DEBUG);
+
+        log.log('no nodes to wire: ' + nodes);
+        return;
+    }
+
+    var nodeIndex = 0,
+        node = nodes[nodeIndex++],
+        responses = [];
+
+    while(node) {
+        responses.push(this._wireElement(node, plugins));
+        node = nodes[nodeIndex++];
+    }
+    return responses;
+};
+/**
+ * @function Dorsal._wireElement
+ * @param {DomNode} nodes DomNodes to wire
+ * @param {String|Array} plugins plugins to wire the given nodes.
+ * @param {Promise} deferred object to proxy to the next method
+ * @private
+ */
+DorsalCore.prototype._wireElement = function(el, plugins) {
+    var self = this,
+        dfd = new DorsalDeferred(),
+        log = new DorsalLog(this.DEBUG);
+
+    window.setTimeout(function() {
+        var validElement = el && 'className' in el,
+            pluginCSSClass,
+            pluginName,
+            pluginResponse,
+            index = 0;
+
+        if (!validElement) {
+            log.log('invalid node to wire: ' + el);
             return;
         }
-        if (el !== document && el.className.indexOf(pluginCSSClass.substr(1)) > -1) {
-            pluginResponse = self._runPlugin(el, pluginName);
-            deferred.notify(pluginName, pluginResponse, self);
+
+        if (!plugins.length) {
+            plugins = self.registeredPlugins();
         }
 
-        for (var elementIndex = 0, element; (element = elements[elementIndex]); elementIndex++) {
-            pluginResponse = self._runPlugin(element, pluginName);
-            deferred.notify(pluginName, pluginResponse, self);
+        pluginName = plugins[index++];
+
+
+        while(pluginName) {
+            pluginCSSClass = self.CSS_PREFIX + pluginName;
+
+            if (el.className.indexOf(pluginCSSClass.substr(1)) > -1) {
+                pluginResponse = self._runPlugin(el, pluginName);
+                dfd.notify(pluginName, pluginResponse, self);
+                log.end(pluginResponse);
+            }
+            pluginName = plugins[index++];
         }
+
+        dfd.resolve();
     }, 0);
+    return dfd.promise();
 };
 
+/**
+ * @function Dorsal._detachPlugin
+ * @param {DomNode} el DomNode to unwire
+ * @param {String} pluginName plugin to unwire from  the given node.
+ * @param {Boolean} hasActuallyDestroyed the unwire status
+ * @private
+ */
 DorsalCore.prototype._detachPlugin = function(el, pluginName) {
     var remainingPlugins,
         hasActuallyDestroyed = false;
@@ -223,10 +358,11 @@ DorsalCore.prototype._detachPlugin = function(el, pluginName) {
 };
 
 /**
- * unwire
- * @param {DOMNode} el
- * @param {String} pluginName
- * @returns {Boolean} true if a plugin was detached, false otherwise
+ * @function Dorsal.unwire
+ * @description will remove a given el/pluginName
+ * @param {DomNode} el node already wired.
+ * @param {String} pluginName plugin Name to uwire.
+ * @return {Boolean} true if a plugin was detached, false otherwise
  */
 DorsalCore.prototype.unwire = function(el, pluginName) {
     // detach a single plugin
@@ -252,98 +388,122 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
 };
 
 /**
- * wire
+ * @function Dorsal.wire
+ * @description wire node/nodes
+ * wire can be used as follow:<br>
  *
- * @param {DOMNode} el
- * @param {String} pluginName
- * @returns {Promise} deferred async wiring of dorsal
+ *  - 0 argument: Will wire each element having the prefix on them.<br>
+ *  - 1 argument (node): Will wire all the children elements from a given node.<br>
+ *  - 1 argument (Array): Will wire all the elements from a given Collection.<br>
+ *  - 2 argument (DomNode, PluginName): Will wire the node/plugin respectively.<br>
+ *
+ *
+ * @param {DomNode|DomNode[]} el a given element or Array to wire
+ * @param {String} pluginName plugin name to wire
+ * @return {Promise} deferred async wiring of dorsal
  */
 DorsalCore.prototype.wire = function(el, pluginName) {
-    var deferred = new DorsalDeferred(this),
-        pluginKeys = Object.keys(this.plugins),
-        pluginCount = (pluginName !== undefined) ? 1 : pluginKeys.length,
-        pluginsCalled = 0;
-
-    deferred.promise().progress(function() {
-        pluginsCalled++;
-        if (pluginsCalled === pluginCount) {
-            deferred.resolve();
-        }
-    });
+    var deferred = new DorsalDeferred(this.ELEMENT_TO_PLUGINS_MAP),
+        pluginKeys = this.registeredPlugins(),
+        responses,
+        action;
 
     if (!this.plugins) {
         throw new Error('No plugins registered with Dorsal');
     }
 
-    if (pluginName) {
-        this._wireElement(el, [pluginName], deferred);
-        return deferred.promise();
+    switch(arguments.length) {
+        case 1:
+            // if el is Array we wire those given elements
+            // otherwise we query elements inside the given element
+            if (isHTMLElement(el)) {
+                responses = this._wireElementsFrom(el);
+            } else {
+                responses = this._wireElements(el, []);
+            }
+            break;
+        case 2:
+            // wiring element/plugin respectively.
+            action = isHTMLElement(el) ? '_wireElement' : '_wireElements';
+
+            responses = this[action](el, [pluginName]);
+            break;
+        default:
+            // without arguments, we define document as our parentElement
+            responses = this._wireElementsFrom(document);
+            break;
     }
 
-    var index = 0,
-        length = pluginKeys.length,
-        el = el || document;
-
-    for (; index < length; index++) {
-        this._wireElement(el, pluginKeys[index], deferred);
-    }
-
-    return deferred.promise();
+    return deferred.when(responses);
 };
 
 /**
- * rewire
- *
- * @param {DOMNode} el
- * @param {stirng} pluginName
- * @returns {Promise} deferred async wiring of dorsal
+ * @function Dorsal.rewire
+ * @description will remove and re initialize a given node/plugin
+ * @param {DomNode} el node to rewire
+ * @param {stirng} pluginName plugin Name
+ * @return {Promise} deferred async wiring of dorsal
  */
 DorsalCore.prototype.rewire = function(el, pluginName) {
+    var deferred;
+
     this.unwire(el, pluginName);
-    return this.wire(el, pluginName);
+
+    if (!pluginName) {
+        el  = [el];
+
+        deferred = this.wire(el);
+    } else {
+        deferred = this.wire(el, pluginName);
+    }
+
+    return deferred;
 };
 
 /**
- * get
- *
- * @param {Array} nodes DomNodes given
- * @returns {Array} all object instances stored for given element/s
+ * @function Dorsal.get
+ * @description will return instances wired to a given node/s
+ * @param {DomNode[]} nodes nodes given
+ * @return {Array} all object instances stored for given node/s
  */
 DorsalCore.prototype.get = function(nodes) {
-    var isArray = nodes instanceof Array,
-        i = 0,
-        instances = [],
+    var instances = [],
         instance,
+        i = 0,
         node;
 
-    if (!isArray) {
+    if (isHTMLElement(nodes)) {
         nodes = [nodes];
     }
-    for (;(node = nodes[i++]);) {
+
+    node = nodes[i++];
+
+    while(node) {
         instance = this._instancesFor(node);
         if (instance) {
             instances.push(instance);
         }
+
+        node = nodes[i++];
     }
+
     return instances;
 };
 
 /**
- * _instancesFor
- *
- * @param {DomNode} el DomNodes given
- * @returns {Object} all instances stored for a particular element
+ * @function Dorsal._instancesFor
+ * @param {DomNode} el Node given
+ * @return {Object} all stored instances for a particular node
+ * @private
 */
 
 DorsalCore.prototype._instancesFor = function(el) {
-    if (el && typeof(el.getAttribute) === 'function') {
 
-        var elementGUID = el.getAttribute(this.GUID_KEY);
+    var elementGUID = isHTMLElement(el) ?
+            el.getAttribute(this.GUID_KEY)
+            : el;
 
-        if (elementGUID) {
-            return this.ELEMENT_TO_PLUGINS_MAP[elementGUID];
-        }
-    }
+    return this.ELEMENT_TO_PLUGINS_MAP[elementGUID];
 };
 
 var Dorsal = new DorsalCore();
@@ -352,7 +512,7 @@ Dorsal.create = function() {
     return new DorsalCore();
 };
 
-DorsalDeferred = function(dorsal) {
+DorsalDeferred = function(instances) {
     var status = 'pending',
         doneFns = [],
         failFns = [],
@@ -366,21 +526,21 @@ DorsalDeferred = function(dorsal) {
         },
         done: function(fn) {
             if (status === 'resolved') {
-                fn.call(dfd, dorsal);
+                fn.call(dfd, instances);
             }
 
             doneFns.push(fn);
 
-            return dfd;
+            return dfd.promise();
         },
         fail: function(fn) {
             if (status === 'rejected') {
-                fn.call(dfd, dorsal);
+                fn.call(dfd, instances);
             }
 
             failFns.push(fn);
 
-            return dfd;
+            return dfd.promise();
         },
         progress: function(fn) {
             progressFns.push(fn);
@@ -409,7 +569,7 @@ DorsalDeferred = function(dorsal) {
         status = 'rejected';
 
         for (i = 0; i < length; i++) {
-            failFns[i].call(dfd, dorsal);
+            failFns[i].call(dfd, instances);
         }
     };
 
@@ -420,7 +580,7 @@ DorsalDeferred = function(dorsal) {
         status = 'resolved';
 
         for (i = 0; i < length; i++) {
-            doneFns[i].call(dfd, dorsal);
+            doneFns[i].call(dfd, instances);
         }
     };
 
@@ -428,7 +588,121 @@ DorsalDeferred = function(dorsal) {
         return promise;
     };
 
-    return dfd;
+    dfd.when = function(promises) {
+        var i = 0,
+            completed = 0,
+            length = promises.length,
+            internalDfd = new DorsalDeferred(instances);
+
+        function promiseDone() {
+            completed++;
+
+            if (completed >= length) {
+                internalDfd.resolve();
+            }
+        }
+
+        function promiseProgress() {
+            internalDfd.notify(dfd, arguments);
+        }
+        for (; i < length; i++) {
+            promises[i].done(promiseDone)
+                .fail(promiseDone)
+                .progress(promiseProgress);
+        }
+
+    return internalDfd.promise();
+    };
+};
+
+DorsalHistoryLog = {};
+
+DorsalLog = function(status) {
+    'use strict';
+
+    var status = status || false,
+        available = console && console.log,
+        groups = DorsalHistoryLog,
+        log = this;
+
+    var timers = function(guid, timeEnd) {
+
+        var action =  timeEnd ? 'timeEnd' : 'time';
+
+        console[action](guid);
+    };
+
+    var render = function(guid) {
+        window.setTimeout(function() {
+
+            var i = 0,
+                messages = groups[guid] || [];
+
+            if (!messages.length) {
+                return;
+            }
+
+            console.group(guid);
+
+            var msg = messages[i++];
+
+            while(msg) {
+                console.log(
+                    msg.time,
+                    'message:',
+                    msg.msg,
+                    'pluginName:',
+                    msg.pluginName
+                );
+                msg = messages[i++];
+            }
+
+            console.groupEnd();
+            delete groups[guid];
+
+        }, 0);
+    };
+
+    log.active = function() {
+        return status;
+    };
+
+    log.end = function(guid) {
+
+        timers(guid, true);
+
+        render(guid);
+    };
+    log.log = function(message, options) {
+        if (!status) {
+            return;
+        }
+
+        var options = options || {},
+            guid = options.guid;
+
+        if (guid) {
+
+           timers(guid);
+
+           if (!groups[guid]) {
+               groups[guid] = [];
+           }
+
+           groups[guid].push({
+               msg: message,
+               time: new Date().getTime(),
+               pluginName: options.pluginName
+           });
+
+        } else {
+            if (console && console.log) {
+                console.log(message);
+            }
+        }
+    };
+
+    return log;
 };
 
 

@@ -26,7 +26,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.4.0';
+DorsalCore.prototype.VERSION = '0.5.0';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
