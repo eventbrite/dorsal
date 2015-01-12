@@ -169,13 +169,15 @@ DorsalCore.prototype.registeredPlugins = function() {
  * @param {Promise} deferred object to proxy to the next method
  * @private
  */
-DorsalCore.prototype._wireElementsFrom = function(parentNode, deferred) {
+DorsalCore.prototype._wireElementsFrom = function(parentNode) {
     var isValidNode = parentNode && 'querySelectorAll' in parentNode,
         plugins = this.registeredPlugins(),
         index = 0,
         pluginName,
         pluginCSSClass,
-        nodes;
+        nodes,
+        response,
+        responses = [];
 
     if (!isValidNode) {
         log.log('invalid Node: '+ prentNode);
@@ -188,10 +190,12 @@ DorsalCore.prototype._wireElementsFrom = function(parentNode, deferred) {
         nodes = parentNode.querySelectorAll(this.CSS_PREFIX + pluginName);
 
         if (nodes.length) {
-            this._wireElements(nodes, [pluginName], deferred);
+            response = this._wireElements(nodes, [pluginName]);
+            responses = responses.concat(response);
         }
         pluginName = plugins[index++];
     }
+    return responses;
 };
 
 /**
@@ -201,7 +205,7 @@ DorsalCore.prototype._wireElementsFrom = function(parentNode, deferred) {
  * @param {Promise} deferred object to proxy to the next method
  * @private
  */
-DorsalCore.prototype._wireElements = function(nodes, plugins, deferred) {
+DorsalCore.prototype._wireElements = function(nodes, plugins) {
     if (!nodes.length) {
         var log = new DorsalLog(this.DEBUG);
 
@@ -210,12 +214,14 @@ DorsalCore.prototype._wireElements = function(nodes, plugins, deferred) {
     }
 
     var nodeIndex = 0,
-        node = nodes[nodeIndex++];
+        node = nodes[nodeIndex++],
+        responses = [];
 
     while(node) {
-        this._wireElement(node, plugins, deferred);
+        responses.push(this._wireElement(node, plugins));
         node = nodes[nodeIndex++];
     }
+    return responses;
 };
 /**
  * @function Dorsal._wireElement
@@ -224,14 +230,16 @@ DorsalCore.prototype._wireElements = function(nodes, plugins, deferred) {
  * @param {Promise} deferred object to proxy to the next method
  * @private
  */
-DorsalCore.prototype._wireElement = function(el, plugins, deferred) {
+DorsalCore.prototype._wireElement = function(el, plugins) {
     var self = this,
+        dfd = new DorsalDeferred(),
         log = new DorsalLog(this.DEBUG);
 
     window.setTimeout(function() {
         var validElement = el && 'className' in el,
             pluginCSSClass,
             pluginName,
+            pluginResponse,
             index = 0;
 
         if (!validElement) {
@@ -251,14 +259,15 @@ DorsalCore.prototype._wireElement = function(el, plugins, deferred) {
 
             if (el.className.indexOf(pluginCSSClass.substr(1)) > -1) {
                 pluginResponse = self._runPlugin(el, pluginName);
-                deferred.notify(pluginName, pluginResponse, self);
+                dfd.notify(pluginName, pluginResponse, self);
                 log.end(pluginResponse);
             }
             pluginName = plugins[index++];
         }
 
-
+        dfd.resolve();
     }, 0);
+    return dfd.promise();
 };
 
 /**
@@ -347,16 +356,8 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
 DorsalCore.prototype.wire = function(el, pluginName) {
     var deferred = new DorsalDeferred(this.ELEMENT_TO_PLUGINS_MAP),
         pluginKeys = this.registeredPlugins(),
-        pluginCount = (pluginName !== undefined) ? 1 : pluginKeys.length,
-        pluginsCalled = 0,
+        responses,
         action;
-
-    deferred.promise().progress(function() {
-        pluginsCalled++;
-        if (pluginsCalled === pluginCount) {
-            deferred.resolve();
-        }
-    });
 
     if (!this.plugins) {
         throw new Error('No plugins registered with Dorsal');
@@ -367,24 +368,24 @@ DorsalCore.prototype.wire = function(el, pluginName) {
             // if el is Array we wire those given elements
             // otherwise we query elements inside the given element
             if (isHTMLElement(el)) {
-                this._wireElementsFrom(el, deferred);
+                responses = this._wireElementsFrom(el);
             } else {
-                this._wireElements(el, [], deferred);
+                responses = this._wireElements(el, []);
             }
             break;
         case 2:
             // wiring element/plugin respectively.
             action = isHTMLElement(el) ? '_wireElement' : '_wireElements';
 
-            this[action](el, [pluginName], deferred);
+            responses = this[action](el, [pluginName]);
             break;
         default:
             // without arguments, we define document as our parentElement
-            this._wireElementsFrom(document, deferred);
+            responses = this._wireElementsFrom(document);
             break;
     }
 
-    return deferred.promise();
+    return deferred.when(responses);
 };
 
 /**

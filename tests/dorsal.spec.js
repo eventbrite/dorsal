@@ -91,25 +91,6 @@
             expect(guid in calledWith).toBeTruthy();
         });
 
-        describe('after initial wire without a valid element', function() {
-
-            beforeEach(function() {
-                this.dorsal.registerPlugin('test', function(options) {
-                    options.el.innerHTML = 'hello, world';
-                 });
-
-            });
-
-            it('should return without exceptions', function() {
-                // we have to create a context given how jasmine execute the
-                 // function to find out if throws and exception or not
-                expect(function() {
-                    this.dorsal.wire([], 'test');
-                    this.clock.tick(10);
-                }.bind(this)).not.toThrow();
-            });
-        });
-
         describe('after initial wire with 2 elements', function() {
 
             beforeEach(function() {

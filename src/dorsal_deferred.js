@@ -32,7 +32,7 @@ DorsalDeferred = function(instances) {
 
             doneFns.push(fn);
 
-            return dfd;
+            return dfd.promise();
         },
         fail: function(fn) {
             if (status === 'rejected') {
@@ -41,7 +41,7 @@ DorsalDeferred = function(instances) {
 
             failFns.push(fn);
 
-            return dfd;
+            return dfd.promise();
         },
         progress: function(fn) {
             progressFns.push(fn);
@@ -89,5 +89,29 @@ DorsalDeferred = function(instances) {
         return promise;
     };
 
-    return dfd;
+    dfd.when = function(promises) {
+        var i = 0,
+            completed = 0,
+            length = promises.length,
+            internalDfd = new DorsalDeferred(instances);
+
+        function promiseDone() {
+            completed++;
+
+            if (completed >= length) {
+                internalDfd.resolve();
+            }
+        }
+
+        function promiseProgress() {
+            internalDfd.notify(dfd, arguments);
+        }
+        for (; i < length; i++) {
+            promises[i].done(promiseDone)
+                .fail(promiseDone)
+                .progress(promiseProgress);
+        }
+
+    return internalDfd.promise();
+    };
 };
