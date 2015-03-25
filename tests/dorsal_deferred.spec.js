@@ -35,6 +35,54 @@ describe("DorsalDeferred", function() {
         expect(this.promise.progress).not.toBeUndefined();
     });
 
+    describe('when aggregating promises', function () {
+        beforeEach(function () {
+            this.deferreds = [
+                new DorsalDeferred(this.instances),
+                new DorsalDeferred(this.instances)
+            ];
+            this.promises = [
+                this.deferreds[0].promise(),
+                this.deferreds[1].promise()
+            ];
+            this.promise = this.deferred.when(this.promises);
+            this.promise.done(this.doneStub);
+            this.promise.fail(this.failStub);
+        });
+
+        it('resolves when all promises resolve', function () {
+            this.deferreds[0].resolve();
+            this.deferreds[1].resolve();
+            expect(this.promise.state()).toBe('resolved');
+            expect(this.doneStub).toHaveBeenCalledOnce();
+            expect(this.failStub).not.toHaveBeenCalled();
+        });
+
+        it('does not resolve when not all promises resolve', function () {
+            this.deferreds[0].resolve();
+            expect(this.promise.state()).toBe('pending');
+            expect(this.doneStub).not.toHaveBeenCalled();
+            expect(this.failStub).not.toHaveBeenCalled();
+        });
+
+        it('resolves when all promises fail', function () {
+            this.deferreds[0].reject();
+            this.deferreds[1].reject();
+            expect(this.promise.state()).toBe('resolved');
+            expect(this.doneStub).toHaveBeenCalledOnce();
+            expect(this.failStub).not.toHaveBeenCalled();
+        });
+
+        it('resolves immediately when promise list is empty', function () {
+            var promise = this.deferred.when([]);
+            promise.done(this.doneStub);
+            promise.fail(this.failStub);
+            expect(promise.state()).toBe('resolved');
+            expect(this.doneStub).toHaveBeenCalledOnce();
+            expect(this.failStub).not.toHaveBeenCalled();
+        });
+    });
+
     describe('when resolved', function() {
         beforeEach(function() {
             this.promise.done(this.doneStub);

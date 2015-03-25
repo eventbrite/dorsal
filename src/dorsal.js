@@ -160,7 +160,11 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
  * @return {Array} registered plugin names
  */
 DorsalCore.prototype.registeredPlugins = function() {
-    return Object.keys(this.plugins);
+    if (this.plugins) {
+        return Object.keys(this.plugins);
+    } else {
+        return [];
+    }
 };
 
 /**
@@ -355,12 +359,11 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
  */
 DorsalCore.prototype.wire = function(el, pluginName) {
     var deferred = new DorsalDeferred(this.ELEMENT_TO_PLUGINS_MAP),
-        pluginKeys = this.registeredPlugins(),
-        responses,
+        responses = [],
         action;
 
     if (!this.plugins) {
-        throw new Error('No plugins registered with Dorsal');
+        console.warn('No plugins registered with Dorsal');
     }
 
     switch(arguments.length) {
