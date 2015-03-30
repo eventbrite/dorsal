@@ -24,7 +24,7 @@
     });
 
     it('initializes without any plugin state', function() {
-        expect(this.dorsal.plugins).not.toBeDefined();
+        expect(this.dorsal.plugins).toEqual({});
     });
 
     describe('registering plugins', function() {
