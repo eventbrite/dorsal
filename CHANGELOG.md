@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+0.6.0
+-----
+- Fixed issue when wiring without any plugins registered.
+
 0.4.0
 -----
 - Unwire
