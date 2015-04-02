@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.5.0 - 2015-01-12 */
+/*! dorsal - v0.6.0 - 2015-04-02 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -83,11 +83,9 @@ DorsalCore.prototype.DATA_DORSAL_WIRED = 'data-' + DorsalCore.prototype.DATA_IGN
 DorsalCore.prototype.GUID_KEY = 'dorsal-guid';
 DorsalCore.prototype.ELEMENT_TO_PLUGINS_MAP = {};
 DorsalCore.prototype.DEBUG = false;
+DorsalCore.prototype.plugins = {};
 
 DorsalCore.prototype.registerPlugin = function(pluginName, callback) {
-    if (!this.plugins) {
-        this.plugins = {};
-    }
     this.plugins[pluginName] = callback;
 };
 
@@ -404,12 +402,13 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
  */
 DorsalCore.prototype.wire = function(el, pluginName) {
     var deferred = new DorsalDeferred(this.ELEMENT_TO_PLUGINS_MAP),
-        pluginKeys = this.registeredPlugins(),
-        responses,
+        responses = [],
         action;
 
-    if (!this.plugins) {
-        throw new Error('No plugins registered with Dorsal');
+    if (!this.plugins.length) {
+        if (console && console.warn) {
+            console.warn('No plugins registered with Dorsal');
+        }
     }
 
     switch(arguments.length) {
@@ -609,6 +608,10 @@ DorsalDeferred = function(instances) {
             promises[i].done(promiseDone)
                 .fail(promiseDone)
                 .progress(promiseProgress);
+        }
+
+        if (!length) {
+            internalDfd.resolve();
         }
 
     return internalDfd.promise();
