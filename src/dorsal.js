@@ -34,11 +34,9 @@ DorsalCore.prototype.DATA_DORSAL_WIRED = 'data-' + DorsalCore.prototype.DATA_IGN
 DorsalCore.prototype.GUID_KEY = 'dorsal-guid';
 DorsalCore.prototype.ELEMENT_TO_PLUGINS_MAP = {};
 DorsalCore.prototype.DEBUG = false;
+DorsalCore.prototype.plugins = {};
 
 DorsalCore.prototype.registerPlugin = function(pluginName, callback) {
-    if (!this.plugins) {
-        this.plugins = {};
-    }
     this.plugins[pluginName] = callback;
 };
 
@@ -355,12 +353,13 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
  */
 DorsalCore.prototype.wire = function(el, pluginName) {
     var deferred = new DorsalDeferred(this.ELEMENT_TO_PLUGINS_MAP),
-        pluginKeys = this.registeredPlugins(),
-        responses,
+        responses = [],
         action;
 
-    if (!this.plugins) {
-        throw new Error('No plugins registered with Dorsal');
+    if (!this.plugins.length) {
+        if (console && console.warn) {
+            console.warn('No plugins registered with Dorsal');
+        }
     }
 
     switch(arguments.length) {

@@ -24,7 +24,7 @@
     });
 
     it('initializes without any plugin state', function() {
-        expect(this.dorsal.plugins).not.toBeDefined();
+        expect(this.dorsal.plugins).toEqual({});
     });
 
     describe('registering plugins', function() {
@@ -127,6 +127,27 @@
 
         });
 
+    });
+
+    describe('without plugins registered', function () {
+
+        it('does not crash when retrieving registered plugins', function () {
+            var that = this;
+            expect(function() {
+                that.dorsal.registeredPlugins();
+            }).not.toThrow();
+        });
+
+        it('does not crash on wire', function () {
+            var that = this;
+            expect(function () {
+                that.dorsal.wire();
+            }).not.toThrow();
+        });
+
+        it('resolves the promise on wire', function () {
+            expect(this.dorsal.wire().state()).toBe('resolved');
+        });
     });
 
     describe('data attributes', function() {

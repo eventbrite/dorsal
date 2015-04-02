@@ -112,6 +112,10 @@ DorsalDeferred = function(instances) {
                 .progress(promiseProgress);
         }
 
+        if (!length) {
+            internalDfd.resolve();
+        }
+
     return internalDfd.promise();
     };
 };
