@@ -72,6 +72,8 @@ DorsalDeferred = function(instances) {
         for (i = 0; i < length; i++) {
             failFns[i].call(dfd, instances);
         }
+
+        return dfd;
     };
 
     dfd.resolve = function() {
@@ -83,6 +85,8 @@ DorsalDeferred = function(instances) {
         for (i = 0; i < length; i++) {
             doneFns[i].call(dfd, instances);
         }
+
+        return dfd;
     };
 
     dfd.promise = function() {

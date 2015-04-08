@@ -26,7 +26,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.5.0';
+DorsalCore.prototype.VERSION = '0.6.1';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
@@ -158,7 +158,15 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
  * @return {Array} registered plugin names
  */
 DorsalCore.prototype.registeredPlugins = function() {
-    return Object.keys(this.plugins);
+    var pluginKeys = Object.keys(this.plugins);
+
+    if (!pluginKeys.length) {
+        if (console && console.warn) {
+            console.warn('No plugins registered with Dorsal');
+        }
+    }
+
+    return pluginKeys;
 };
 
 /**
@@ -346,6 +354,7 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
  *  - 1 argument (Array): Will wire all the elements from a given Collection.<br>
  *  - 2 argument (DomNode, PluginName): Will wire the node/plugin respectively.<br>
  *
+ * Wire will not accept an explicitly `undefined` or falsy `el` argument.
  *
  * @param {DomNode|DomNode[]} el a given element or Array to wire
  * @param {String} pluginName plugin name to wire
@@ -356,10 +365,9 @@ DorsalCore.prototype.wire = function(el, pluginName) {
         responses = [],
         action;
 
-    if (!this.plugins.length) {
-        if (console && console.warn) {
-            console.warn('No plugins registered with Dorsal');
-        }
+    if (arguments.length && !el) {
+        // Bail out if we received a falsy el argument
+        return deferred.resolve().promise();
     }
 
     switch(arguments.length) {

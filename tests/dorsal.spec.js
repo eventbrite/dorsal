@@ -127,6 +127,19 @@
 
         });
 
+        describe('when wiring a falsy element', function() {
+            it('does not crash on wire', function () {
+                var that = this;
+                expect(function () {
+                    that.dorsal.wire(undefined);
+                }).not.toThrow();
+            });
+
+            it('returns a resolved promise on wire', function() {
+                var promise = this.dorsal.wire(undefined);
+                expect(promise.state()).toBe('resolved');
+            });
+        });
     });
 
     describe('without plugins registered', function () {

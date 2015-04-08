@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.6.0 - 2015-04-02 */
+/*! dorsal - v0.6.1 - 2015-04-08 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -75,7 +75,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.5.0';
+DorsalCore.prototype.VERSION = '0.6.1';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
@@ -207,7 +207,15 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
  * @return {Array} registered plugin names
  */
 DorsalCore.prototype.registeredPlugins = function() {
-    return Object.keys(this.plugins);
+    var pluginKeys = Object.keys(this.plugins);
+
+    if (!pluginKeys.length) {
+        if (console && console.warn) {
+            console.warn('No plugins registered with Dorsal');
+        }
+    }
+
+    return pluginKeys;
 };
 
 /**
@@ -395,6 +403,7 @@ DorsalCore.prototype.unwire = function(el, pluginName) {
  *  - 1 argument (Array): Will wire all the elements from a given Collection.<br>
  *  - 2 argument (DomNode, PluginName): Will wire the node/plugin respectively.<br>
  *
+ * Wire will not accept an explicitly `undefined` or falsy `el` argument.
  *
  * @param {DomNode|DomNode[]} el a given element or Array to wire
  * @param {String} pluginName plugin name to wire
@@ -405,10 +414,9 @@ DorsalCore.prototype.wire = function(el, pluginName) {
         responses = [],
         action;
 
-    if (!this.plugins.length) {
-        if (console && console.warn) {
-            console.warn('No plugins registered with Dorsal');
-        }
+    if (arguments.length && !el) {
+        // Bail out if we received a falsy el argument
+        return deferred.resolve().promise();
     }
 
     switch(arguments.length) {
@@ -570,6 +578,8 @@ DorsalDeferred = function(instances) {
         for (i = 0; i < length; i++) {
             failFns[i].call(dfd, instances);
         }
+
+        return dfd;
     };
 
     dfd.resolve = function() {
@@ -581,6 +591,8 @@ DorsalDeferred = function(instances) {
         for (i = 0; i < length; i++) {
             doneFns[i].call(dfd, instances);
         }
+
+        return dfd;
     };
 
     dfd.promise = function() {
@@ -650,7 +662,7 @@ DorsalLog = function(status) {
             var msg = messages[i++];
 
             while(msg) {
-                console.log(
+                console[msg.msgType || 'log'](
                     msg.time,
                     'message:',
                     msg.msg,
@@ -666,17 +678,7 @@ DorsalLog = function(status) {
         }, 0);
     };
 
-    log.active = function() {
-        return status;
-    };
-
-    log.end = function(guid) {
-
-        timers(guid, true);
-
-        render(guid);
-    };
-    log.log = function(message, options) {
+    var msg = function(message, msgType, options) {
         if (!status) {
             return;
         }
@@ -695,14 +697,37 @@ DorsalLog = function(status) {
            groups[guid].push({
                msg: message,
                time: new Date().getTime(),
-               pluginName: options.pluginName
+               pluginName: options.pluginName,
+               msgType: msgType
            });
 
         } else {
-            if (console && console.log) {
-                console.log(message);
+            if (console && console[msgType]) {
+                console[msgType](message);
             }
         }
+    };
+
+    log.active = function() {
+        return status;
+    };
+
+    log.end = function(guid) {
+        timers(guid, true);
+
+        render(guid);
+    };
+
+    log.log = function(message, options) {
+        msg(message, 'log', options);
+    };
+
+    log.warn = function(message, options) {
+        msg(message, 'warn', options);
+    };
+
+    log.info = function(message, options) {
+        msg(message, 'info', options);
     };
 
     return log;
