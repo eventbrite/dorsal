@@ -662,7 +662,7 @@ DorsalLog = function(status) {
             var msg = messages[i++];
 
             while(msg) {
-                console.log(
+                console[msg.msgType || 'log'](
                     msg.time,
                     'message:',
                     msg.msg,
@@ -678,17 +678,7 @@ DorsalLog = function(status) {
         }, 0);
     };
 
-    log.active = function() {
-        return status;
-    };
-
-    log.end = function(guid) {
-
-        timers(guid, true);
-
-        render(guid);
-    };
-    log.log = function(message, options) {
+    var msg = function(message, msgType, options) {
         if (!status) {
             return;
         }
@@ -707,14 +697,37 @@ DorsalLog = function(status) {
            groups[guid].push({
                msg: message,
                time: new Date().getTime(),
-               pluginName: options.pluginName
+               pluginName: options.pluginName,
+               msgType: msgType
            });
 
         } else {
-            if (console && console.log) {
-                console.log(message);
+            if (console && console[msgType]) {
+                console[msgType](message);
             }
         }
+    };
+
+    log.active = function() {
+        return status;
+    };
+
+    log.end = function(guid) {
+        timers(guid, true);
+
+        render(guid);
+    };
+
+    log.log = function(message, options) {
+        msg(message, 'log', options);
+    };
+
+    log.warn = function(message, options) {
+        msg(message, 'warn', options);
+    };
+
+    log.info = function(message, options) {
+        msg(message, 'info', options);
     };
 
     return log;

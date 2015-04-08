@@ -5,6 +5,7 @@ Change Log
 -----
 - Fixed wire failing when an undefined element is passed in.
 - Missing plugins message now triggered from `registeredPlugins()`
+- Implemented `log.info` and `log.warn`
 
 0.6.0
 -----
