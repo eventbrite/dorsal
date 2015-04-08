@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+0.6.1
+-----
+- Fixed wire failing when an undefined element is passed in.
+- Missing plugins message now triggered from `registeredPlugins()`
+
 0.6.0
 -----
 - Fixed issue when wiring without any plugins registered.
