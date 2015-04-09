@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.6.1 - 2015-04-08 */
+/*! dorsal - v0.6.1 - 2015-04-09 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -62,6 +62,30 @@ function arrayIndexOf(arr, value) {
     return -1;
 }
 
+// from: http://underscorejs.org/docs/underscore.html#section-94
+// except: not dealing with the bug with enum though.
+
+function keysFor(obj) {
+    var keys = [],
+        key;
+
+    if (!obj) {
+        return keys;
+    }
+
+    if (Object.keys) {
+        return Object.keys(obj);
+    }
+
+    for (key in obj) {
+        if (hasOwnProperty.call(obj, key)) {
+            keys.push(key);
+        }
+    }
+
+    return keys;
+}
+
 var DorsalCore = function() {};
 
 /**
@@ -75,7 +99,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.6.1';
+DorsalCore.prototype.VERSION = '0.6.2';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
@@ -207,7 +231,7 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
  * @return {Array} registered plugin names
  */
 DorsalCore.prototype.registeredPlugins = function() {
-    var pluginKeys = Object.keys(this.plugins);
+    var pluginKeys = keysFor(this.plugins);
 
     if (!pluginKeys.length) {
         if (console && console.warn) {

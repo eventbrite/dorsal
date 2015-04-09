@@ -26,7 +26,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.6.1';
+DorsalCore.prototype.VERSION = '0.6.2';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
@@ -158,7 +158,7 @@ DorsalCore.prototype._runPlugin = function(el, pluginName) {
  * @return {Array} registered plugin names
  */
 DorsalCore.prototype.registeredPlugins = function() {
-    var pluginKeys = Object.keys(this.plugins);
+    var pluginKeys = keysFor(this.plugins);
 
     if (!pluginKeys.length) {
         if (console && console.warn) {

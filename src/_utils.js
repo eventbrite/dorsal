@@ -46,3 +46,27 @@ function arrayIndexOf(arr, value) {
 
     return -1;
 }
+
+// from: http://underscorejs.org/docs/underscore.html#section-94
+// except: not dealing with the bug with enum though.
+
+function keysFor(obj) {
+    var keys = [],
+        key;
+
+    if (!obj) {
+        return keys;
+    }
+
+    if (Object.keys) {
+        return Object.keys(obj);
+    }
+
+    for (key in obj) {
+        if (hasOwnProperty.call(obj, key)) {
+            keys.push(key);
+        }
+    }
+
+    return keys;
+}
