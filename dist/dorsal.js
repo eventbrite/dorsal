@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.6.1 - 2015-04-09 */
+/*! dorsal - v0.6.2 - 2015-04-09 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {

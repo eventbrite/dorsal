@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+0.6.2
+-----
+- Added shim for `Object.keys`
+
 0.6.1
 -----
 - Fixed wire failing when an undefined element is passed in.
