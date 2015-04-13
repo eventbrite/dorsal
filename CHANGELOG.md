@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+0.6.3
+-----
+- Fixed calling `.wire()` with `document`
+
 0.6.2
 -----
 - Added shim for `Object.keys`

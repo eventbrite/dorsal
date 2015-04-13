@@ -26,7 +26,7 @@ var DorsalCore = function() {};
 * @property {DEBUG} Dorsal.DEBUG - prefix for any wirable pluginName
 */
 
-DorsalCore.prototype.VERSION = '0.6.2';
+DorsalCore.prototype.VERSION = '0.6.3';
 DorsalCore.prototype.CSS_PREFIX = '.js-d-';
 DorsalCore.prototype.DATA_IGNORE_PREFIX = 'xd';
 DorsalCore.prototype.DATA_PREFIX = 'd';
@@ -374,7 +374,7 @@ DorsalCore.prototype.wire = function(el, pluginName) {
         case 1:
             // if el is Array we wire those given elements
             // otherwise we query elements inside the given element
-            if (isHTMLElement(el)) {
+            if (isDOM(el) || isHTMLElement(el)) {
                 responses = this._wireElementsFrom(el);
             } else {
                 responses = this._wireElements(el, []);
@@ -382,7 +382,11 @@ DorsalCore.prototype.wire = function(el, pluginName) {
             break;
         case 2:
             // wiring element/plugin respectively.
-            action = isHTMLElement(el) ? '_wireElement' : '_wireElements';
+            if (isDOM(el)) {
+                action = '_wireElementsFrom';
+            } else {
+                action = isHTMLElement(el) ? '_wireElement' : '_wireElements';
+            }
 
             responses = this[action](el, [pluginName]);
             break;
