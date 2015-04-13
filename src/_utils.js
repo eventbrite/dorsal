@@ -30,6 +30,11 @@ function isHTMLElement(node) {
     return node.nodeType === 1;
 }
 
+// Handles `document`
+function isDOM(node) {
+    return node.nodeType === 9;
+}
+
 function arrayIndexOf(arr, value) {
     var lengthOfArr = arr.length,
         i = 0;
