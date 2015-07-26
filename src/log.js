@@ -27,7 +27,10 @@ DorsalLog = function(status) {
 
         var action =  timeEnd ? 'timeEnd' : 'time';
 
-        console[action](guid);
+        if (console[action]) {
+
+            console[action](guid);
+        }
     };
 
     var render = function(guid) {
