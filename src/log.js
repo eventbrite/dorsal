@@ -25,10 +25,13 @@ DorsalLog = function(status) {
 
     var timers = function(guid, timeEnd) {
 
-        var action =  timeEnd ? 'timeEnd' : 'time';
+        if (!status) {
+            return;
+        }
+
+        var action = timeEnd ? 'timeEnd' : 'time';
 
         if (console[action]) {
-
             console[action](guid);
         }
     };

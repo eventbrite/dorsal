@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.6.3 - 2015-04-13 */
+/*! dorsal - v0.6.3 - 2016-09-09 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -675,9 +675,15 @@ DorsalLog = function(status) {
 
     var timers = function(guid, timeEnd) {
 
-        var action =  timeEnd ? 'timeEnd' : 'time';
+        if (!status) {
+            return;
+        }
 
-        console[action](guid);
+        var action = timeEnd ? 'timeEnd' : 'time';
+
+        if (console[action]) {
+            console[action](guid);
+        }
     };
 
     var render = function(guid) {
