@@ -109,13 +109,11 @@ module.exports = function(grunt) {
             }
         },
         jshint: {
-          files: {
-            src: ['src/**/*.js', 'tests/*.js']
-          },
-          options: {
+            options: {
             shadow: true,
             es3: true
-          }
+          },
+            all: ['src/**/*.js', 'test/**/*.js']
         }
     });
 

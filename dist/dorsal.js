@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/*! dorsal - v0.6.3 - 2016-09-09 */
+/*! dorsal - v0.6.4 - 2016-09-30 */
 
 (function(root, factory) {
     if(typeof exports === 'object') {
@@ -635,7 +635,7 @@ DorsalDeferred = function(instances) {
     dfd.when = function(promises) {
         var i = 0,
             completed = 0,
-            length = promises.length,
+            length = promises && promises.length ? promises.length : 0,
             internalDfd = new DorsalDeferred(instances);
 
         function promiseDone() {
