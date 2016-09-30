@@ -96,7 +96,7 @@ DorsalDeferred = function(instances) {
     dfd.when = function(promises) {
         var i = 0,
             completed = 0,
-            length = promises.length,
+            length = promises && promises.length ? promises.length : 0,
             internalDfd = new DorsalDeferred(instances);
 
         function promiseDone() {
