@@ -58,7 +58,7 @@
     "grunt-umd": "~1.7.4",
     "jasmine-jquery": "git://github.com/velesin/jasmine-jquery.git#584922d11787aaeeb1d2c4bd9b1b51a8fc08896d",
     "jasmine-sinon": "^0.4.0",
-    "jquery": "^2.1.1",
+    "jquery": "^3.5.0",
     "sinon": "~1.10.2"
   }
 }
